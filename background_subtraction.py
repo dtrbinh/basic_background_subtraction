@@ -1,41 +1,51 @@
-import cv2
-import numpy as np
+from __future__ import print_function
+import cv2 as cv
+import argparse
 
-name1 = input('Tên ảnh gốc: ')
-name2 = input ('Tên ảnh cần so sánh: ')              
-FOREGROUND_IMG = name2 #Ảnh cần so sánh
-BACKGROUND_IMG = name1 #Ảnh gốc
+parser = argparse.ArgumentParser(description='This program shows how to use background subtraction methods provided by \
+                                              OpenCV. You can process both videos and images.')
+parser.add_argument('--input', type=str, help='Path to a video or a sequence of image.', default='2.jpg')
+parser.add_argument('--algo', type=str, help='Background subtraction method (KNN, MOG2).', default='1.ipg')
+args = parser.parse_args()
 
-def blur_color_img(img, kernel_width=5, kernel_height=5, sigma_x=2, sigma_y=2):
-    img = np.copy(img) # we don't modify the original image
-    img[:,:,0] = cv2.GaussianBlur(img[:,:,0], ksize=(kernel_width, kernel_height), sigmaX=sigma_x, sigmaY=sigma_y)
-    img[:,:,1] = cv2.GaussianBlur(img[:,:,1], ksize=(kernel_width, kernel_height), sigmaX=sigma_x, sigmaY=sigma_y)
-    img[:,:,2] = cv2.GaussianBlur(img[:,:,2], ksize=(kernel_width, kernel_height), sigmaX=sigma_x, sigmaY=sigma_y)
-    return img   
+## [create]
+#create Background Subtractor objects
+if args.algo == '2.jpg':
+    backSub = cv.createBackgroundSubtractorMOG2()
+else:
+    backSub = cv.createBackgroundSubtractorKNN()
+## [create]
 
-def background_subtraction(fg_img, bg_img, diff_threshold=30):
-    fg_img = blur_color_img(fg_img, 7, 7, 4, 4)
-    bg_img = blur_color_img(bg_img, 7, 7, 4, 4)
-    mask = fg_img - bg_img
-    mask = np.abs(mask)
-    mask = np.mean(mask, axis=2, keepdims=False)
-    mask[mask<diff_threshold] = 0
-    mask[mask>=diff_threshold] = 255
-    mask = mask.astype(np.uint8)
-    mask = cv2.medianBlur(mask, 7)
-    return mask
-    
-def main(foreground_img, background_img):
-    fg_img = cv2.imread(foreground_img) # [h, w, 3]
-    bg_img = cv2.imread(background_img) # [h, w, 3]
-    mask = background_subtraction(fg_img, bg_img)
-    new_fg = np.zeros([fg_img.shape[0], fg_img.shape[1], 4]) # png image --> has 4-dims instead of 3-dims like color image
-    new_fg[:,:,:3] = fg_img
-    new_fg[:,:,3] = mask
-    cv2.imwrite('mask.jpg', mask)
-    cv2.imwrite('result.png', new_fg)
-    
-if __name__ == "__main__":
-    print('Running Background Subtraction for: %s and %s' % (FOREGROUND_IMG, BACKGROUND_IMG))
-    main(foreground_img = FOREGROUND_IMG, background_img = BACKGROUND_IMG)
-    print('* Done!')
+## [capture]
+capture = cv.VideoCapture(cv.samples.findFileOrKeep(args.input))
+if not capture.isOpened():
+    print('Unable to open: ' + args.input)
+    exit(0)
+## [capture]
+
+while True:
+    ret, frame = capture.read()
+    if frame is None:
+        break
+
+    ## [apply]
+    #update the background model
+    fgMask = backSub.apply(frame)
+    ## [apply]
+
+    ## [display_frame_number]
+    #get the frame number and write it on the current frame
+    cv.rectangle(frame, (10, 2), (100,20), (255,255,255), -1)
+    cv.putText(frame, str(capture.get(cv.CAP_PROP_POS_FRAMES)), (15, 15),
+               cv.FONT_HERSHEY_SIMPLEX, 0.5 , (0,0,0))
+    ## [display_frame_number]
+
+    ## [show]
+    #show the current frame and the fg masks
+    cv.imshow('Frame', frame)
+    cv.imshow('FG Mask', fgMask)
+    ## [show]
+
+    keyboard = cv.waitKey(30)
+    if keyboard == 'q' or keyboard == 27:
+        break
