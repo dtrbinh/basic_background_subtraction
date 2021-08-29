@@ -2,15 +2,18 @@ from __future__ import print_function
 import cv2 as cv
 import argparse
 
+img1 = input('Tên ảnh 1: ')
+img2 = input('Tên ảnh 2: ')
+
 parser = argparse.ArgumentParser(description='This program shows how to use background subtraction methods provided by \
                                               OpenCV. You can process both videos and images.')
-parser.add_argument('--input', type=str, help='Path to a video or a sequence of image.', default='2.jpg')
-parser.add_argument('--algo', type=str, help='Background subtraction method (KNN, MOG2).', default='1.ipg')
+parser.add_argument('--input', type=str, help='Path to a video or a sequence of image.', default = img1)
+parser.add_argument('--algo', type=str, help='Background subtraction method (KNN, MOG2).', default = img2)
 args = parser.parse_args()
 
 ## [create]
 #create Background Subtractor objects
-if args.algo == '2.jpg':
+if args.algo == img2:
     backSub = cv.createBackgroundSubtractorMOG2()
 else:
     backSub = cv.createBackgroundSubtractorKNN()
@@ -19,7 +22,7 @@ else:
 ## [capture]
 capture = cv.VideoCapture(cv.samples.findFileOrKeep(args.input))
 if not capture.isOpened():
-    print('Unable to open: ' + args.input)
+    print('Không thể mở: ' + args.input)
     exit(0)
 ## [capture]
 
