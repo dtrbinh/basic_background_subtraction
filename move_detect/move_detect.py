@@ -4,7 +4,10 @@ import numpy as np
 
 backSub = cv2.createBackgroundSubtractorMOG2()
 
-capture = cv2.VideoCapture('test.mp4')
+filename = input('Tên file cần xử lý: ')
+
+capture = cv2.VideoCapture(filename)
+
 
 while True:
     _, frame = capture.read()
